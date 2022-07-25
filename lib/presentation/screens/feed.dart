@@ -11,6 +11,8 @@ class FeedPage extends StatefulWidget {
 }
 
 class _FeedPageState extends State<FeedPage> {
+  final _pageController = PageController();
+
   @override
   void initState() {
     super.initState();
@@ -38,24 +40,40 @@ class _FeedPageState extends State<FeedPage> {
           return SizedBox(
             height: size.height,
             width: size.width,
-            child: PageView.builder(
-              scrollDirection: Axis.vertical,
-              itemCount: state.videos.length,
-              itemBuilder: (context, index) {
-                return VideoPage(
-                  video: state.videos.elementAt(index),
-                  playImmediately: state.currentVideo == index,
-                );
-              },
-              onPageChanged: (pageIndex) {
-                debugPrint('Selected page: $pageIndex');
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await context.read<FeedCubit>().refresh();
 
-                context.read<FeedCubit>().moveTo(pageIndex);
+                // REFRESH THE PageView TRICK
+                _pageController.jumpToPage(1);
+                await Future.delayed(const Duration(milliseconds: 100));
+                _pageController.jumpToPage(0);
               },
+              child: PageView.builder(
+                controller: _pageController,
+                scrollDirection: Axis.vertical,
+                itemCount: state.videos.length,
+                itemBuilder: (context, index) {
+                  return VideoPage(
+                    video: state.videos.elementAt(index),
+                    playImmediately: state.currentVideo == index,
+                  );
+                },
+                onPageChanged: (pageIndex) {
+                  context.read<FeedCubit>().moveTo(pageIndex);
+                },
+              ),
             ),
           );
         },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+
+    super.dispose();
   }
 }

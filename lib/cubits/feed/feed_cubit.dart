@@ -49,6 +49,12 @@ class FeedCubit extends Cubit<FeedState> {
     }
   }
 
+  Future<void> refresh() {
+    emit(state.copyWith(status: Status.request));
+
+    return loadMore(forceLoadVideos: true);
+  }
+
   Future<void> loadMore({
     bool forceLoadVideos = false,
   }) async {
@@ -60,12 +66,12 @@ class FeedCubit extends Cubit<FeedState> {
       emit(
         state.copyWith(
           status: Status.success,
-          videos: [...state.videos, ...videoFeed],
+          videos: forceLoadVideos ? videoFeed : [...state.videos, ...videoFeed],
         ),
       );
 
       if (forceLoadVideos) {
-        moveTo(0);
+        await moveTo(0);
       }
     } catch (e, st) {
       emit(state.copyWith(status: Status.failure));
@@ -79,7 +85,7 @@ class FeedCubit extends Cubit<FeedState> {
 
   /// Sets the [FeedState.videoIndex], calculate how much videos
   /// needs to be downloaded, and schedules the download.
-  void moveTo(int videoIndex) async {
+  Future<void> moveTo(int videoIndex) async {
     final loadMoreIsNeeded = videoIndex + _preloadAmount > state.videos.length;
 
     if (loadMoreIsNeeded) {
@@ -95,6 +101,10 @@ class FeedCubit extends Cubit<FeedState> {
     }
 
     emit(state.copyWith(currentVideo: videoIndex));
+
+    if (_downloads.values.isNotEmpty) {
+      await _downloads.values.first.future;
+    }
   }
 
   /// Downloads the [video] by [video.url] and update the state
