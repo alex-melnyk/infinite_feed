@@ -1,15 +1,13 @@
-import 'dart:convert';
-
 class AuthCheck {
-  AuthCheck({
+  const AuthCheck({
     required this.message,
   });
 
-  String message;
+  factory AuthCheck.fromMap(Map<String, dynamic> map) {
+    return AuthCheck(
+      message: map['message'],
+    );
+  }
 
-  factory AuthCheck.fromJson(String str) => AuthCheck.fromMap(json.decode(str));
-
-  factory AuthCheck.fromMap(Map<String, dynamic> json) => AuthCheck(
-        message: json["message"],
-      );
+  final String message;
 }

@@ -1,10 +1,9 @@
 import 'package:uuid/uuid.dart';
 
+/// The device info class.
 class DeviceInfo {
-  static String? deviceId;
+  const DeviceInfo._();
 
-  initId() {
-    const uuid = Uuid();
-    deviceId = uuid.v4();
-  }
+  static const uuid = Uuid();
+  static final deviceId = uuid.v4();
 }
