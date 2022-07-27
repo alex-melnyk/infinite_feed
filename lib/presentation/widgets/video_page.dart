@@ -9,11 +9,9 @@ class VideoPage extends StatefulWidget {
   const VideoPage({
     Key? key,
     required this.video,
-    this.playImmediately = false,
   }) : super(key: key);
 
   final Video video;
-  final bool playImmediately;
 
   @override
   State<VideoPage> createState() => _VideoPageState();
@@ -152,7 +150,7 @@ class _VideoPageState extends State<VideoPage> {
       return;
     }
 
-    if (info.visibleFraction >= 0.90 &&
+    if (info.visibleFraction >= 0.9 &&
         !(_videoPlayerController?.value.isPlaying ?? false)) {
       await _initializeFuture;
       await _videoPlayerController?.play();
