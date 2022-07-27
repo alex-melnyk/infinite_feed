@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:infinite_feed/screens/feed/feed.dart';
-import 'package:infinite_feed/utils/device_info.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:infinite_feed/cubits/cubits.dart';
+import 'package:infinite_feed/presentation/presentation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  DeviceInfo().initId();
   runApp(const MyApp());
 }
 
@@ -14,10 +14,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => FeedCubit(),
+            lazy: false,
+          ),
+        ],
+        child: const FeedPage(),
       ),
-      home: const FeedPage(),
     );
   }
 }
