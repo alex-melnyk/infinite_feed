@@ -62,8 +62,6 @@ class _VideoPageState extends State<VideoPage> {
               child: FutureBuilder(
                 future: _initializeFuture,
                 builder: (context, snapshot) {
-                  print(snapshot);
-
                   if (_videoPlayerController == null ||
                       snapshot.connectionState != ConnectionState.done) {
                     return const Center(
