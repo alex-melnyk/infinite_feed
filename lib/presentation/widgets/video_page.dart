@@ -62,6 +62,8 @@ class _VideoPageState extends State<VideoPage> {
               child: FutureBuilder(
                 future: _initializeFuture,
                 builder: (context, snapshot) {
+                  print(snapshot);
+
                   if (_videoPlayerController == null ||
                       snapshot.connectionState != ConnectionState.done) {
                     return const Center(
@@ -150,11 +152,11 @@ class _VideoPageState extends State<VideoPage> {
       return;
     }
 
-    if (info.visibleFraction >= 0.9 &&
+    if (info.visibleFraction >= 0.85 &&
         !(_videoPlayerController?.value.isPlaying ?? false)) {
       await _initializeFuture;
       await _videoPlayerController?.play();
-    } else if (info.visibleFraction <= 0.1 &&
+    } else if (info.visibleFraction <= 0.15 &&
         _videoPlayerController!.value.isPlaying) {
       await _videoPlayerController?.pause();
     }

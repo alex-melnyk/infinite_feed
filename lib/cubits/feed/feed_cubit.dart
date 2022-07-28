@@ -111,9 +111,10 @@ class FeedCubit extends Cubit<FeedState> {
   /// when the video is downloaded.
   Future<void> _downloadVideo(Video video) async {
     try {
+      final fileUuid = DeviceInfo.uuid.v4();
       final downloadedVideo = await _contentRepository.downloadVideo(
         video: video,
-        file: File(join(_temporaryDir.path, DeviceInfo.uuid.v4())),
+        file: File(join(_temporaryDir.path, '$fileUuid.mp4')),
       );
 
       final videoIndex =

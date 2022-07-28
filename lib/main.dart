@@ -16,14 +16,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData.light(),
       darkTheme: ThemeData.dark(),
-      home: MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (_) => FeedCubit(),
-            lazy: false,
-          ),
-        ],
-        child: const FeedPage(),
+      home: BlocProvider(
+        create: (_) => FeedCubit(),
+        lazy: false,
+        child: const FeedScreen(),
       ),
     );
   }
