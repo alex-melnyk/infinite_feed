@@ -125,14 +125,14 @@ class FeedCubit extends Cubit<FeedState> {
           videos: [...state.videos]..[videoIndex] = downloadedVideo,
         ),
       );
-
-      _downloads.remove(video.url);
     } catch (e, st) {
       developer.log(
         'Failed to load video "${video.url}"',
         error: e,
         stackTrace: st,
       );
+    } finally {
+      _downloads.remove(video.url);
     }
   }
 }

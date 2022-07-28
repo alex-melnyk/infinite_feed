@@ -56,7 +56,6 @@ class _FeedPageState extends State<FeedPage> {
                 itemBuilder: (context, index) {
                   return VideoPage(
                     video: state.videos.elementAt(index),
-                    playImmediately: state.currentVideo == index,
                   );
                 },
                 onPageChanged: (pageIndex) {
