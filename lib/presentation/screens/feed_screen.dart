@@ -3,14 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:infinite_feed/cubits/cubits.dart';
 import 'package:infinite_feed/presentation/widgets/video_page.dart';
 
-class FeedPage extends StatefulWidget {
-  const FeedPage({Key? key}) : super(key: key);
+class FeedScreen extends StatefulWidget {
+  const FeedScreen({Key? key}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _FeedPageState();
+  State<StatefulWidget> createState() => _FeedScreenState();
 }
 
-class _FeedPageState extends State<FeedPage> {
+class _FeedScreenState extends State<FeedScreen> {
   final _pageController = PageController();
 
   @override
@@ -50,6 +50,7 @@ class _FeedPageState extends State<FeedPage> {
                 _pageController.jumpToPage(0);
               },
               child: PageView.builder(
+                onPageChanged: context.read<FeedCubit>().moveTo,
                 controller: _pageController,
                 scrollDirection: Axis.vertical,
                 itemCount: state.videos.length,
@@ -57,9 +58,6 @@ class _FeedPageState extends State<FeedPage> {
                   return VideoPage(
                     video: state.videos.elementAt(index),
                   );
-                },
-                onPageChanged: (pageIndex) {
-                  context.read<FeedCubit>().moveTo(pageIndex);
                 },
               ),
             ),

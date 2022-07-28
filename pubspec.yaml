@@ -1,6 +1,5 @@
 name: infinite_feed
-description: A new Flutter project.
-
+description: The infinite feed project.
 version: 1.0.0+1
 
 environment:
