@@ -1,25 +1,31 @@
 import 'dart:io';
 
-import 'package:infinite_feed/api/api_helper.dart';
-import 'package:infinite_feed/data/model/video.dart';
+import 'package:infinite_feed/data/models/video.dart';
+import 'package:infinite_feed/data/repository/base_repository.dart';
 
-class ContentRepository {
-  const ContentRepository(this._apiService);
+class ContentRepository extends BaseRepository {
+  const ContentRepository(super.apiService);
 
-  final ApiHelper _apiService;
-
-  Future<List<Video>> fetchVideos() async {
-    final data = await _apiService.getVideos();
-    return List.of(data).cast<Map<String, dynamic>>()
+  /// Request main feed videos from the server.
+  ///
+  /// Returns a list of [Video] when successfully downloaded, otherwise
+  /// returns an empty list.
+  Future<List<Video>> fetchVideoMainFeed() async {
+    final data = await apiService.videosMainFeed();
+    return List.of(data ?? []).cast<Map<String, dynamic>>()
         .map<Video>(Video.fromMap)
         .toList();
   }
 
+  /// Downloads the [video] file to the local [file].
+  ///
+  /// Returns the copy of [video] with [Video.filePath] property
+  /// when successfully downloaded, otherwise returns the [video] instance.
   Future<Video> downloadVideo({
     required Video video,
     required File file,
   }) async {
-    await _apiService.downloadFile(
+    await apiService.downloadFile(
       video.url,
       filePath: file.path,
     );

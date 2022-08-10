@@ -1,13 +1,18 @@
-import 'package:infinite_feed/api/api_helper.dart';
-import 'package:infinite_feed/data/model/auth_check.dart';
+import 'package:infinite_feed/data/repository/base_repository.dart';
 
-class AuthRepository {
-  const AuthRepository(this._apiService);
+class AuthRepository extends BaseRepository {
+  const AuthRepository(super.apiService);
 
-  final ApiHelper _apiService;
+  /// Health check auth.
+  ///
+  /// Returns true if it is "ok", otherwise false.
+  Future<bool> heathCheckAuth() async {
+    final data = await apiService.healthCheckAuth();
 
-  Future<AuthCheck> checkAuth() async {
-    final data = await _apiService.checkAuth();
-    return AuthCheck.fromMap(data);
+    if (data['message']?.toLowerCase() == 'ok') {
+      return true;
+    }
+
+    return false;
   }
 }

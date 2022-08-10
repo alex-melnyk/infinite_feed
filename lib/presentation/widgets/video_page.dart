@@ -1,9 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:infinite_feed/data/model/video.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:infinite_feed/cubits/cubits.dart';
+import 'package:infinite_feed/data/models/video.dart';
+import 'package:infinite_feed/presentation/widgets/widgets.dart';
+import 'package:infinite_feed/utils/duration_extension.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'dart:developer' as developer;
 
 class VideoPage extends StatefulWidget {
   const VideoPage({
@@ -18,6 +21,7 @@ class VideoPage extends StatefulWidget {
 }
 
 class _VideoPageState extends State<VideoPage> {
+  static const kTag = 'VideoPageWidget';
   static const _backgroundDecoration = BoxDecoration(
     border: Border(
       bottom: BorderSide(
@@ -27,15 +31,13 @@ class _VideoPageState extends State<VideoPage> {
     ),
   );
   final _visibilityKey = GlobalKey();
-  bool _isVisible = false;
-  VideoPlayerController? _videoPlayerController;
-  Future<void>? _initializeFuture;
+  late final VideoPageCubit videoPageCubit;
 
   @override
   void initState() {
     super.initState();
 
-    _initializeVideo();
+    videoPageCubit = VideoPageCubit(widget.video)..initialize();
   }
 
   @override
@@ -43,100 +45,59 @@ class _VideoPageState extends State<VideoPage> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.video != widget.video) {
-      _initializeVideo();
+      videoPageCubit
+        ..updateVideo(widget.video)
+        ..initialize();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: _backgroundDecoration,
-      child: VisibilityDetector(
-        key: _visibilityKey,
-        onVisibilityChanged: _handleVisibilityChanged,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            GestureDetector(
-              onTap: _handleTogglePlayPressed,
-              child: FutureBuilder(
-                future: _initializeFuture,
-                builder: (context, snapshot) {
-                  if (_videoPlayerController == null ||
-                      snapshot.connectionState != ConnectionState.done) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
+    return BlocProvider(
+      create: (_) => videoPageCubit,
+      child: DecoratedBox(
+        decoration: _backgroundDecoration,
+        child: VisibilityDetector(
+          key: _visibilityKey,
+          onVisibilityChanged: _handleVisibilityChanged,
+          child: BlocBuilder<VideoPageCubit, VideoPageState>(
+            builder: (context, state) {
+              if (!state.isInitialized) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
 
-                  return AspectRatio(
-                    aspectRatio: _videoPlayerController!.value.aspectRatio,
-                    child: VideoPlayer(_videoPlayerController!),
-                  );
-                },
-              ),
-            ),
-            if (_videoPlayerController != null)
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  width: double.maxFinite,
-                  height: 5,
-                  decoration: const BoxDecoration(
-                    color: Colors.white30,
-                  ),
-                  child: ValueListenableBuilder<VideoPlayerValue>(
-                    valueListenable: _videoPlayerController!,
-                    builder: (_, value, __) {
-                      final diff = value.position.inMilliseconds /
-                          value.duration.inMilliseconds;
+              final controller = state.controller!;
 
-                      return FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: diff.isNaN ? 0.0 : diff,
-                        heightFactor: 1.0,
-                        child: const DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                          ),
-                        ),
-                      );
-                    },
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  GestureDetector(
+                    onTap: _handleTogglePlayPressed,
+                    child: AspectRatio(
+                      aspectRatio: controller.value.aspectRatio,
+                      child: VideoPlayer(controller),
+                    ),
                   ),
-                ),
-              ),
-          ],
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ValueListenableBuilder<VideoPlayerValue>(
+                      valueListenable: controller,
+                      builder: (_, value, __) {
+                        return VideoProgress(
+                          value: value.position / value.duration,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _videoPlayerController?.dispose();
-
-    super.dispose();
-  }
-
-  void _initializeVideo() {
-    if (!mounted) {
-      return;
-    }
-
-    if (widget.video.filePath == null) {
-      return;
-    }
-
-    if (_videoPlayerController == null) {
-      _videoPlayerController =
-          VideoPlayerController.file(File(widget.video.filePath!))
-            ..setLooping(true);
-      _initializeFuture = _videoPlayerController!.initialize();
-    }
-
-    if (_isVisible && !_videoPlayerController!.value.isPlaying) {
-      _videoPlayerController!.play();
-    }
   }
 
   void _handleVisibilityChanged(VisibilityInfo info) async {
@@ -144,37 +105,35 @@ class _VideoPageState extends State<VideoPage> {
       return;
     }
 
-    _isVisible = info.visibleFraction == 1.0;
+    developer.log('$kTag visibility: ${info.visibleFraction}');
 
-    if (_videoPlayerController == null || _initializeFuture == null) {
+    videoPageCubit.updateVisibleFraction(info.visibleFraction);
+
+    if (!videoPageCubit.state.isInitialized) {
+      developer.log('$kTag video is not initialized yet');
       return;
     }
 
-    if (info.visibleFraction >= 0.85 &&
-        !(_videoPlayerController?.value.isPlaying ?? false)) {
-      await _initializeFuture;
-      await _videoPlayerController?.play();
-    } else if (info.visibleFraction <= 0.15 &&
-        _videoPlayerController!.value.isPlaying) {
-      await _videoPlayerController?.pause();
+    developer.log('$kTag video visible at top part');
+
+    if (videoPageCubit.isVisibleTopPart) {
+      developer.log('$kTag video visible at top part');
+      await videoPageCubit.play();
+    } else if (videoPageCubit.isVisibleBottomPart) {
+      developer.log('$kTag video visible at bottom part');
+      await videoPageCubit.pause();
     }
   }
 
   void _handleTogglePlayPressed() async {
-    if (!mounted) {
+    if (!mounted && !videoPageCubit.state.isInitialized) {
       return;
     }
 
-    final isInitialized = _videoPlayerController?.value.isInitialized ?? false;
-
-    if (!isInitialized) {
-      return;
-    }
-
-    if (_videoPlayerController!.value.isPlaying) {
-      await _videoPlayerController!.pause();
+    if (videoPageCubit.isPlaying) {
+      await videoPageCubit.pause();
     } else {
-      await _videoPlayerController!.play();
+      await videoPageCubit.play();
     }
   }
 }

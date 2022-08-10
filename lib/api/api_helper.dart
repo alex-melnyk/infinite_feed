@@ -4,7 +4,8 @@ import 'package:path/path.dart';
 
 class ApiHelper {
   static const _baseUrl = 'https://api.claps.ai/v1';
-  static final client = Dio(
+
+  static final _client = Dio(
     BaseOptions(
       headers: {
         'Device-Id': DeviceInfo.deviceId,
@@ -12,20 +13,21 @@ class ApiHelper {
     ),
   );
 
-  Future<dynamic> checkAuth() async {
-    final resp = await client.get(join(_baseUrl, 'health-check-auth'));
+  Future<dynamic> healthCheckAuth() async {
+    final resp = await _client.get(join(_baseUrl, 'health-check-auth'));
     return resp.data;
   }
 
-  Future<dynamic> getVideos() async {
-    final resp = await client.get(join(_baseUrl, 'videos/main-feed'));
+  Future<List?> videosMainFeed() async {
+    final resp = await _client.get(join(_baseUrl, 'videos/main-feed'));
     return resp.data;
   }
 
+  /// Downloads the file by [url] to the local [filePath].
   Future<void> downloadFile(
     String url, {
     required String filePath,
   }) {
-    return client.download(url, filePath);
+    return _client.download(url, filePath);
   }
 }
